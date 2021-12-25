@@ -176,6 +176,54 @@ def set_pin_retries(
             echo_default_pins()
 
 
+@access.command("change-pin")
+@click.option("-o", "--old-pin", help="Old PIN for OpenPGP.")
+@click.option("-n", "--new-pin", help="New PIN for OpenPGP.")
+@click.pass_context
+def change_pin(ctx, old_pin, new_pin):
+    """
+    Change PIN.
+    """
+
+    controller = ctx.obj["controller"]
+
+    if old_pin is None:
+        old_pin = click_prompt("Enter PIN", hide_input=True)
+
+    if new_pin is None:
+        new_pin = click_prompt("New PIN", hide_input=True)
+        new_pin_repeated = click_prompt("Repeat new PIN", hide_input=True)
+
+        if new_pin != new_pin_repeated:
+            cli_fail("PIN not correctly repeated.")
+
+    controller.change_pin(old_pin, new_pin)
+
+
+@access.command("change-admin")
+@click.option("-o", "--old-admin", help="Old Admin PIN for OpenPGP.")
+@click.option("-n", "--new-admin", help="New Admin PIN for OpenPGP.")
+@click.pass_context
+def change_admin(ctx, old_admin, new_admin):
+    """
+    Change Admin PIN.
+    """
+
+    controller = ctx.obj["controller"]
+
+    if old_admin is None:
+        old_admin = click_prompt("Enter Admin PIN", hide_input=True)
+
+    if new_admin is None:
+        new_admin = click_prompt("New Admin PIN", hide_input=True)
+        new_admin_repeated = click_prompt("Repeat new Admin PIN", hide_input=True)
+
+        if new_admin != new_admin_repeated:
+            cli_fail("Admin PIN not correctly repeated.")
+
+    controller.change_admin(old_admin, new_admin)
+
+
 @openpgp.group("keys")
 def keys():
     """Manage private keys."""

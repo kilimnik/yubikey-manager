@@ -107,6 +107,7 @@ class INS(IntEnum):  # noqa: N801
     GET_DATA = 0xCA
     GET_VERSION = 0xF1
     SET_PIN_RETRIES = 0xF2
+    CHANGE_PIN = 0x24
     VERIFY = 0x20
     TERMINATE = 0xE6
     ACTIVATE = 0x44
@@ -441,6 +442,24 @@ class OpenPgpController(object):
 
     def verify_admin(self, admin_pin):
         self._verify(PW3, admin_pin)
+
+    def _change(self, pw, old_pin, new_pin):
+        try:
+            old_pin = self._get_kdf().process(pw, old_pin.encode())
+            new_pin = self._get_kdf().process(pw, new_pin.encode())
+            self._app.send_apdu(0, INS.CHANGE_PIN, 0, pw, old_pin + new_pin)
+        except ApduError as e:
+            if e.sw == SW.CONDITIONS_NOT_SATISFIED:
+                raise ValueError("Conditions of use not satisfied.")
+            else:
+                pw_remaining = self.get_remaining_pin_tries()[pw - PW1]
+                raise ValueError(f"Invalid PIN, {pw_remaining} tries remaining.")
+
+    def change_pin(self, old_pin, new_pin):
+        self._change(PW1, old_pin, new_pin)
+
+    def change_admin(self, old_admin_pin, new_admin_pin):
+        self._change(PW3, old_admin_pin, new_admin_pin)
 
     @property
     def supported_touch_policies(self):
