@@ -401,6 +401,16 @@ class OpenPgpController(object):
         data = self._get_data(DO.PW_STATUS)
         return PinRetries(*data[4:7])
 
+    def is_force_signature_pin(self):
+        data = self._get_data(DO.PW_STATUS)
+        return not bool(data[0])
+
+    def set_force_signature_pin(self, status):
+        """Requires Admin PIN verification."""
+        data = struct.pack(">B", not status)
+
+        self._put_data(DO.PW_STATUS, data)
+
     def _block_pins(self):
         retries = self.get_remaining_pin_tries()
 

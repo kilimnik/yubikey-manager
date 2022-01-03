@@ -224,6 +224,33 @@ def change_admin(ctx, old_admin, new_admin):
     controller.change_admin(old_admin, new_admin)
 
 
+@access.command("force-sig")
+@click.option("-s", "--status", help="New force signature pin status.")
+@click.option("-a", "--admin-pin", help="Admin PIN for OpenPGP.")
+@click.pass_context
+def force_sig(ctx, status, admin_pin):
+    """
+    Get and set force signature pin status.
+    """
+    controller = ctx.obj["controller"]
+
+    if status is not None:
+        if admin_pin is None:
+            admin_pin = click_prompt("Enter ADMIN PIN", hide_input=True)
+
+        status = status.lower() == "true"
+
+        try:
+            controller.verify_admin(admin_pin)
+            controller.set_force_signature_pin(status)
+        except Exception as e:
+            logger.debug("Failed to set new signature pin status", exc_info=e)
+            cli_fail("Failed to set new signature pin status")
+
+    status = controller.is_force_signature_pin()
+    click.echo(f"Signature pin is {'not ' if not status else ''}forced.")
+
+
 @openpgp.group("keys")
 def keys():
     """Manage private keys."""
